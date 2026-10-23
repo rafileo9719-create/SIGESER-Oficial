@@ -24,7 +24,8 @@ Route::middleware('auth')->group(function () {
 
     // CRUD de Carreras
     Route::resource('carreras', CarreraController::class);
-
+    Route::resource('dependencias', \App\Http\Controllers\DependenciaController::class);
+    
     // Pruebas de búsqueda
     Route::get('/prueba-busqueda', [PruebaController::class, 'index'])->name('prueba.busqueda');
     Route::get('/alumnos/buscar/{matricula}', [AlumnoController::class, 'buscar'])->name('alumnos.buscar');

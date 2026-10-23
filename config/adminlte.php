@@ -765,6 +765,11 @@ return [
 
     'menu' => [
         // Navbar items:
+         [
+            'text' => 'Dependencias',
+            'url' => 'dependencias',
+            'icon' => 'bi bi-building',
+        ],
         [
             'text' => 'Carreras',
             'url' => 'carreras',
