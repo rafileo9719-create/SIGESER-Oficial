@@ -13,4 +13,10 @@ class Alumno extends Model
         'matricula', 'nombre', 'ap_paterno', 'ap_materno', 
         'carrera', 'semestre', 'correo_institucional', 'telefono', 'status'
     ];
+
+    // Aquí va la nueva función de relación
+    public function expedientes() 
+    { 
+        return $this->hasMany(Expediente::class); 
+    }
 }

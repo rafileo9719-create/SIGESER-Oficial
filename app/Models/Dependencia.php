@@ -11,6 +11,8 @@ class Dependencia extends Model
 
     protected $fillable = [
         'nombre', 'sector', 'titular_nombre', 'titular_puesto', 
-        'telefono', 'direccion', 'tipo_convenio', 'activa'
+        'telefono', 'direccion', 'aplica_para', 'activa',
+        'fecha_firma_convenio', 'fecha_inicio', 'fecha_termino', 
+        'tipo_convenio_institucional', 'giro', 'tamano', 'actividad'
     ];
 }

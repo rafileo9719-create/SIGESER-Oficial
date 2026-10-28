@@ -765,6 +765,11 @@ return [
 
     'menu' => [
         // Navbar items:
+        [
+            'text' => 'Expedientes',
+            'url' => 'expedientes',
+            'icon' => 'bi bi-folder',
+        ],
          [
             'text' => 'Dependencias',
             'url' => 'dependencias',
@@ -793,83 +798,6 @@ return [
         [
             'type' => 'sidebar-menu-search',
             'text' => 'search',
-        ],
-        [
-            'text' => 'blog',
-            'url' => 'admin/blog',
-            'can' => 'manage-blog',
-        ],
-        [
-            'text' => 'pages',
-            'url' => 'admin/pages',
-            'icon' => 'bi bi-file-earmark',
-            'label' => 4,
-            'label_color' => 'success',
-        ],
-        ['header' => 'account_settings'],
-        [
-            'text' => 'profile',
-            'url' => 'admin/settings',
-            'icon' => 'bi bi-person',
-        ],
-        [
-            'text' => 'change_password',
-            'url' => 'admin/settings',
-            'icon' => 'bi bi-lock',
-        ],
-        [
-            'text' => 'multilevel',
-            'icon' => 'bi bi-share',
-            'submenu' => [
-                [
-                    'text' => 'level_one',
-                    'url' => '#',
-                ],
-                [
-                    'text' => 'level_one',
-                    'url' => '#',
-                    'submenu' => [
-                        [
-                            'text' => 'level_two',
-                            'url' => '#',
-                        ],
-                        [
-                            'text' => 'level_two',
-                            'url' => '#',
-                            'submenu' => [
-                                [
-                                    'text' => 'level_three',
-                                    'url' => '#',
-                                ],
-                                [
-                                    'text' => 'level_three',
-                                    'url' => '#',
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-                [
-                    'text' => 'level_one',
-                    'url' => '#',
-                ],
-            ],
-        ],
-        ['header' => 'labels'],
-        [
-            'text' => 'important',
-            'icon_color' => 'danger',
-            'url' => '#',
-        ],
-        [
-            'text' => 'warning',
-            'icon_color' => 'warning',
-            'url' => '#',
-        ],
-        [
-            'text' => 'information',
-            'icon_color' => 'info',
-            'url' => '#',
         ],
     ],
 

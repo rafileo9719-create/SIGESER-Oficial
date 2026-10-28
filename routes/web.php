@@ -29,6 +29,8 @@ Route::middleware('auth')->group(function () {
     // Pruebas de búsqueda
     Route::get('/prueba-busqueda', [PruebaController::class, 'index'])->name('prueba.busqueda');
     Route::get('/alumnos/buscar/{matricula}', [AlumnoController::class, 'buscar'])->name('alumnos.buscar');
+    // CRUD de Expedientes
+    Route::resource('expedientes', \App\Http\Controllers\ExpedienteController::class);
 });
 
 require __DIR__.'/auth.php';
