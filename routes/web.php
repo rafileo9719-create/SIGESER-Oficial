@@ -31,6 +31,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/alumnos/buscar/{matricula}', [AlumnoController::class, 'buscar'])->name('alumnos.buscar');
     // CRUD de Expedientes
     Route::resource('expedientes', \App\Http\Controllers\ExpedienteController::class);
+    
+    Route::post('/documentos/{documento}/estado', [\App\Http\Controllers\ExpedienteController::class, 'updateEstado'])->name('documentos.updateEstado');
 });
 
 require __DIR__.'/auth.php';

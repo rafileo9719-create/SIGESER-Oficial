@@ -9,10 +9,20 @@ use Illuminate\Http\Request;
 
 class ExpedienteController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Traemos los expedientes con los datos del alumno y la dependencia
-        $expedientes = Expediente::with(['alumno', 'dependencia'])->latest()->get();
+        $query = Expediente::with(['alumno', 'dependencia']);
+
+        // Lógica de búsqueda
+        if ($request->filled('buscar')) {
+            $buscar = $request->buscar;
+            $query->whereHas('alumno', function ($q) use ($buscar) {
+                $q->where('matricula', 'like', "%{$buscar}%")
+                  ->orWhere('nombre', 'like', "%{$buscar}%");
+            });
+        }
+
+        $expedientes = $query->latest()->get();
         return view('expedientes.index', compact('expedientes'));
     }
 
@@ -64,6 +74,21 @@ class ExpedienteController extends Controller
         $progreso = $totalDocs > 0 ? round(($docsAprobados / $totalDocs) * 100) : 0;
 
         return view('expedientes.show', compact('expediente', 'progreso', 'totalDocs', 'docsAprobados'));
+    }
+        public function updateEstado(Request $request, \App\Models\DocumentoExpediente $documento)
+    {
+        // Validamos que el estado sea uno de los permitidos
+        $request->validate([
+            'estado' => 'required|in:Aprobado,Rechazado,Pendiente',
+            'observaciones' => 'nullable|string|max:500'
+        ]);
+
+        $documento->update([
+            'estado' => $request->estado,
+            'observaciones' => $request->observaciones
+        ]);
+
+        return redirect()->back()->with('success', 'Estado del documento actualizado correctamente.');
     }
     public function edit(string $id)
     {
