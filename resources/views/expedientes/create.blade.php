@@ -111,8 +111,15 @@
                     <div class="col-12"><h5>Datos específicos de Residencia</h5></div>
                     <div class="col-md-6 form-group">
                         <label>Número de Afiliación IMSS:</label>
-                        <input type="text" name="numero_afiliacion_imss" class="form-control">
+                        <input type="text" name="numero_afiliacion_imss" class="form-control" 
+                            maxlength="11" 
+                            pattern="\d{11}" 
+                            title="Debe ingresar exactamente 11 dígitos numéricos"
+                            placeholder="Ej. 12345678901"
+                            value="{{ old('numero_afiliacion_imss') }}">
+                        <small class="text-muted">Ingrese los 11 dígitos sin espacios ni guiones.</small>
                     </div>
+                    
                     <div class="col-md-6 form-group">
                         <label>Asesor Interno:</label>
                         <input type="text" name="asesor_interno" class="form-control">

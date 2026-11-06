@@ -76,7 +76,7 @@
                                 <tr>
                                     <td class="align-middle font-weight-bold">{{ $doc->nombre_documento }}</td>
                                     
-                                    <!-- COLUMNA ESTADO Y OBSERVACIONES -->
+                                <!-- COLUMNA ESTADO Y OBSERVACIONES -->
                                     <td class="text-center align-middle">
                                         @if($doc->estado == 'Pendiente')
                                             <span class="badge text-bg-warning px-3 py-2">Pendiente</span>
@@ -95,23 +95,45 @@
                                             </div>
                                         @endif
                                     </td>
-
-                                    <!-- COLUMNA ACCIONES -->
+                                                                    <!-- COLUMNA ACCIONES -->
                                     <td class="text-center align-middle">
-                                        <div class="d-flex flex-row flex-nowrap justify-content-center gap-1" style="min-width: 380px;">
+                                        <div class="d-flex flex-row flex-nowrap justify-content-center gap-1" style="min-width: 420px;">
                                             
+                                            <!-- 1. BOTÓN GENERAR (Para todos) -->
                                             <button class="btn btn-sm btn-primary text-nowrap" title="Descargar Formato">
                                                 <i class="fas fa-download"></i> Generar
                                             </button>
                                             
-                                            @if(!$doc->genera_admin)
-                                                <button class="btn btn-sm btn-success text-nowrap" title="Subir Escaneado">
-                                                    <i class="fas fa-upload"></i> Subir
-                                                </button>
+                                            <!-- 2. BOTÓN VER (Solo si ya hay archivo subido) -->
+                                            @if($doc->archivo_path)
+                                                <a href="{{ asset('storage/' . $doc->archivo_path) }}" target="_blank" class="btn btn-sm btn-dark text-nowrap" title="Ver Archivo">
+                                                    <i class="fas fa-eye"></i> Ver
+                                                </a>
+                                            @endif
+                                            
+                                            <!-- 3. ACCIONES DEL ALUMNO -->
+                                            @if(Auth::user()->rol === 'alumno' && !$doc->genera_admin)
+                                                
+                                                @if($doc->estado === 'Pendiente' || $doc->estado === 'Rechazado')
+                                                    <!-- Puede subir si está pendiente o si se lo rechazaron -->
+                                                    <button type="button" class="btn btn-sm btn-success text-nowrap btn-subir" 
+                                                            data-id="{{ $doc->id }}" data-nombre="{{ $doc->nombre_documento }}"
+                                                            data-bs-toggle="modal" data-bs-target="#modalSubirArchivo">
+                                                        <i class="fas fa-upload"></i> Subir
+                                                    </button>
+                                                @elseif($doc->estado === 'Entregado')
+                                                    <!-- Botón bloqueado mientras el admin lo revisa -->
+                                                    <button class="btn btn-sm btn-secondary text-nowrap" disabled title="Esperando revisión del encargado">
+                                                        <i class="fas fa-clock"></i> En Revisión
+                                                    </button>
+                                                @endif
                                             @endif
 
-                                            @if(Auth::check() && Auth::user()->rol === 'admin')
-                                                @if($doc->estado !== 'Aprobado')
+                                            <!-- 4. ACCIONES DEL ENCARGADO (ADMIN) -->
+                                            @if(Auth::user()->rol === 'admin')
+                                                
+                                                <!-- Aprobar (Solo si no está aprobado y YA subió archivo) -->
+                                                @if($doc->estado !== 'Aprobado' && $doc->archivo_path)
                                                     <form action="{{ route('documentos.updateEstado', $doc) }}" method="POST" class="m-0">
                                                         @csrf
                                                         <input type="hidden" name="estado" value="Aprobado">
@@ -119,28 +141,30 @@
                                                             <i class="fas fa-check"></i> Aprobar
                                                         </button>
                                                     </form>
-                                                @else
-                                                    <button class="btn btn-sm btn-success text-nowrap" disabled title="Documento aprobado">
+                                                @elseif($doc->estado === 'Aprobado')
+                                                    <button class="btn btn-sm btn-success text-nowrap" disabled>
                                                         <i class="fas fa-check-circle"></i> Aprobado
                                                     </button>
                                                 @endif
 
-                                                <!-- Botón de Observación -->
-                                                <button type="button" class="btn btn-sm btn-danger text-nowrap btn-evaluar" 
-                                                        data-id="{{ $doc->id }}" 
-                                                        data-nombre="{{ $doc->nombre_documento }}" 
-                                                        data-estado="{{ $doc->estado == 'Aprobado' ? 'Aprobado' : 'Rechazado' }}"
-                                                        data-observaciones="{{ $doc->observaciones }}"
-                                                        data-bs-toggle="modal" data-bs-target="#modalObservaciones">
-                                                    @if($doc->observaciones)
-                                                        <i class="fas fa-edit"></i> Editar Obs.
-                                                    @else
-                                                        <i class="fas fa-times"></i> Rechazar
-                                                    @endif
-                                                </button>
+                                                <!-- Observar / Rechazar (Disponible siempre que el alumno haya subido algo) -->
+                                                @if($doc->archivo_path)
+                                                    <button type="button" class="btn btn-sm btn-danger text-nowrap btn-evaluar" 
+                                                            data-id="{{ $doc->id }}" data-nombre="{{ $doc->nombre_documento }}" 
+                                                            data-estado="{{ $doc->estado == 'Aprobado' ? 'Aprobado' : 'Rechazado' }}"
+                                                            data-observaciones="{{ $doc->observaciones }}"
+                                                            data-bs-toggle="modal" data-bs-target="#modalObservaciones">
+                                                        @if($doc->observaciones)
+                                                            <i class="fas fa-edit"></i> Editar Obs.
+                                                        @else
+                                                            <i class="fas fa-times"></i> Rechazar
+                                                        @endif
+                                                    </button>
+                                                @endif
                                             @endif   
                                         </div>
                                     </td>
+                             
                                 </tr>
                                 @empty
                                 <tr>
@@ -153,6 +177,33 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA SUBIR ARCHIVO -->
+    <div class="modal fade" id="modalSubirArchivo" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="formSubirArchivo" method="POST" action="" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">Subir Documento Escaneado</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h6 class="font-weight-bold text-primary" id="nombre-documento-subir"></h6>
+                        <p class="text-muted text-sm">Selecciona el archivo PDF o Imagen (Máx. 5MB).</p>
+                        
+                        <div class="form-group mt-3">
+                            <input class="form-control" type="file" name="archivo" required accept=".pdf,.jpg,.jpeg,.png">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Subir Archivo</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -188,22 +239,45 @@
 
 @section('js')
 <script>
-    document.querySelectorAll('.btn-evaluar').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const id = this.getAttribute('data-id');
-            const nombre = this.getAttribute('data-nombre');
-            const estado = this.getAttribute('data-estado');
-            const observaciones = this.getAttribute('data-observaciones');
+    // Esperamos a que todo el HTML cargue
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- 1. Configurar Modal de Subida ---
+        const modalSubir = document.getElementById('modalSubirArchivo');
+        if (modalSubir) {
+            modalSubir.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget; 
+                const id = button.getAttribute('data-id');
+                const nombre = button.getAttribute('data-nombre');
 
-            document.getElementById('nombre-documento-modal').textContent = 'Documento: ' + nombre;
-            document.getElementById('estado-input').value = estado;
-            document.getElementById('observaciones').value = observaciones;
-            
-            // Generamos la URL de forma dinámica con el ID correcto
-            let url = "{{ route('documentos.updateEstado', ':id') }}";
-            url = url.replace(':id', id);
-            document.getElementById('formObservaciones').action = url;
-        });
+                document.getElementById('nombre-documento-subir').textContent = 'Documento: ' + nombre;
+                
+                let url = "{{ route('documentos.subir', ':id') }}";
+                url = url.replace(':id', id);
+                document.getElementById('formSubirArchivo').setAttribute('action', url);
+            });
+        }
+
+        // --- 2. Configurar Modal de Observaciones ---
+        const modalObs = document.getElementById('modalObservaciones');
+        if (modalObs) {
+            modalObs.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget; 
+                const id = button.getAttribute('data-id');
+                const nombre = button.getAttribute('data-nombre');
+                const estado = button.getAttribute('data-estado');
+                const observaciones = button.getAttribute('data-observaciones');
+
+                document.getElementById('nombre-documento-modal').textContent = 'Documento: ' + nombre;
+                document.getElementById('estado-input').value = estado;
+                document.getElementById('observaciones').value = observaciones;
+                
+                let url = "{{ route('documentos.updateEstado', ':id') }}";
+                url = url.replace(':id', id);
+                document.getElementById('formObservaciones').setAttribute('action', url);
+            });
+        }
+
     });
 </script>
 @stop

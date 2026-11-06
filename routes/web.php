@@ -31,8 +31,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/alumnos/buscar/{matricula}', [AlumnoController::class, 'buscar'])->name('alumnos.buscar');
     // CRUD de Expedientes
     Route::resource('expedientes', \App\Http\Controllers\ExpedienteController::class);
-    
+    // Ruta para actualizar el estado de un documento específico
     Route::post('/documentos/{documento}/estado', [\App\Http\Controllers\ExpedienteController::class, 'updateEstado'])->name('documentos.updateEstado');
+    // Ruta para subir archivos a un documento específico
+    Route::post('/documentos/{documento}/subir', [\App\Http\Controllers\ExpedienteController::class, 'subirArchivo'])->name('documentos.subir');
 });
 
 require __DIR__.'/auth.php';
