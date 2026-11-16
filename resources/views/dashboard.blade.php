@@ -19,6 +19,13 @@
         </div>
     </div>
 
+    <!-- PRUEBA DE SPATIE: Solo visible para administradores -->
+    @role('admin')
+        <div class="alert alert-success shadow-sm" style="border-left: 5px solid #28a745;">
+            <strong><i class="fas fa-shield-alt"></i> Acceso de Administrador:</strong> El sistema de permisos (Spatie) está funcionando correctamente. Tienes control total sobre SIGESER.
+        </div>
+    @endrole
+
     <!-- Tarjetas de Estadísticas -->
     <div class="row">
         <div class="col-lg-3 col-6">
@@ -124,15 +131,20 @@
                     <h4 class="font-weight-bold text-dark"><i class="fas fa-bolt text-warning"></i> Acciones Rápidas</h4>
                 </div>
                 <div class="card-body">
-                    <a href="{{ route('expedientes.create') }}" class="btn btn-block mb-3" style="background-color: #621132; color: white; border-radius: 8px; padding: 12px;">
-                        <i class="fas fa-plus-circle mr-2"></i> Nuevo Expediente
-                    </a>
+                {{-- Todos los usuarios logueados pueden crear un expediente --}}
+                <a href="{{ route('expedientes.create') }}" class="btn btn-block mb-3" style="background-color: #621132; color: white; border-radius: 8px; padding: 12px;">
+                    <i class="fas fa-plus-circle mr-2"></i> Nuevo Expediente
+                </a>
+
+                {{-- SOLO el admin y el encargado pueden crear dependencias y carreras --}}
+                @role('admin|encargado')
                     <a href="{{ route('dependencias.create') }}" class="btn btn-outline-dark btn-block mb-3" style="border-radius: 8px; padding: 12px;">
                         <i class="fas fa-building mr-2"></i> Nueva Dependencia
                     </a>
                     <a href="{{ route('carreras.create') }}" class="btn btn-outline-dark btn-block" style="border-radius: 8px; padding: 12px;">
                         <i class="fas fa-graduation-cap mr-2"></i> Nueva Carrera
                     </a>
+                @endrole
                 </div>
             </div>
             
@@ -147,4 +159,37 @@
             </div>
         </div>
     </div>
+@stop
+
+@section('js')
+<!-- PASO 1: CHATBOT FLOTANTE ESTILO WHATSAPP -->
+<div id="chat-box" class="card shadow-lg" style="display: none; position: fixed; bottom: 90px; right: 20px; width: 300px; z-index: 9999; border-radius: 15px; overflow: hidden;">
+    <div class="card-header text-white" style="background-color: #621132;">
+        <h5 class="card-title mb-0"><i class="fas fa-robot"></i> Asistente SIGESER</h5>
+        <button type="button" class="close text-white" onclick="document.getElementById('chat-box').style.display='none'">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <div class="card-body" style="height: 250px; overflow-y: auto; background-color: #f8f9fa;">
+        <div class="p-2 mb-2 bg-white rounded shadow-sm" style="width: 85%;">
+            <small class="text-muted">SIGESER:</small><br>
+            ¡Hola! Soy tu asistente virtual. ¿En qué te puedo ayudar hoy?
+        </div>
+    </div>
+    <div class="card-footer bg-white p-2">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="Escribe un mensaje...">
+            <div class="input-group-append">
+                <button class="btn btn-outline-secondary" type="button"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Botón flotante para abrir el chat -->
+<div id="chat-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+    <button class="btn btn-lg rounded-circle shadow" style="background-color: #621132; color: white;" onclick="document.getElementById('chat-box').style.display='block'">
+        <i class="fas fa-comments"></i>
+    </button>
+</div>
 @stop

@@ -4,16 +4,19 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PruebaController;
 use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\CarreraController;
+use App\Http\Controllers\DashboardController; // <-- ¡ESTA LÍNEA FALTABA!
+use App\Http\Controllers\DependenciaController;
+use App\Http\Controllers\ExpedienteController;
 use Illuminate\Support\Facades\Route;
-
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Ruta del Dashboard protegida
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 // Grupos de TODAS las rutas protegidas en un solo bloque
 Route::middleware('auth')->group(function () {
@@ -24,17 +27,21 @@ Route::middleware('auth')->group(function () {
 
     // CRUD de Carreras
     Route::resource('carreras', CarreraController::class);
-    Route::resource('dependencias', \App\Http\Controllers\DependenciaController::class);
+    Route::resource('dependencias', DependenciaController::class);
     
     // Pruebas de búsqueda
     Route::get('/prueba-busqueda', [PruebaController::class, 'index'])->name('prueba.busqueda');
     Route::get('/alumnos/buscar/{matricula}', [AlumnoController::class, 'buscar'])->name('alumnos.buscar');
+    
     // CRUD de Expedientes
-    Route::resource('expedientes', \App\Http\Controllers\ExpedienteController::class);
-    // Ruta para actualizar el estado de un documento específico
-    Route::post('/documentos/{documento}/estado', [\App\Http\Controllers\ExpedienteController::class, 'updateEstado'])->name('documentos.updateEstado');
-    // Ruta para subir archivos a un documento específico
-    Route::post('/documentos/{documento}/subir', [\App\Http\Controllers\ExpedienteController::class, 'subirArchivo'])->name('documentos.subir');
+    Route::resource('expedientes', ExpedienteController::class);
+    
+    // Rutas para documentos del expediente
+    Route::post('/documentos/{documento}/estado', [ExpedienteController::class, 'updateEstado'])->name('documentos.updateEstado');
+    Route::post('/documentos/{documento}/subir', [ExpedienteController::class, 'subirArchivo'])->name('documentos.subir');
+
+    // Ruta para guardar observaciones
+    Route::post('/expedientes/{expediente}/observaciones', [ExpedienteController::class, 'storeObservacion'])->name('expedientes.observaciones.store');
 });
 
 require __DIR__.'/auth.php';

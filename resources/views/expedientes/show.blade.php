@@ -8,6 +8,14 @@
 
 @section('content')
     
+    <!-- MENSAJE DE ÉXITO -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="fas fa-check-circle"></i> {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+    @endif
+
     <!-- 1. DATOS DEL ALUMNO -->
     <div class="row">
         <div class="col-12">
@@ -76,7 +84,7 @@
                                 <tr>
                                     <td class="align-middle font-weight-bold">{{ $doc->nombre_documento }}</td>
                                     
-                                <!-- COLUMNA ESTADO Y OBSERVACIONES -->
+                                    <!-- COLUMNA ESTADO Y OBSERVACIONES -->
                                     <td class="text-center align-middle">
                                         @if($doc->estado == 'Pendiente')
                                             <span class="badge text-bg-warning px-3 py-2">Pendiente</span>
@@ -95,7 +103,8 @@
                                             </div>
                                         @endif
                                     </td>
-                                                                    <!-- COLUMNA ACCIONES -->
+                                    
+                                    <!-- COLUMNA ACCIONES -->
                                     <td class="text-center align-middle">
                                         <div class="d-flex flex-row flex-nowrap justify-content-center gap-1" style="min-width: 420px;">
                                             
@@ -111,28 +120,25 @@
                                                 </a>
                                             @endif
                                             
-                                            <!-- 3. ACCIONES DEL ALUMNO -->
-                                            @if(Auth::user()->rol === 'alumno' && !$doc->genera_admin)
-                                                
-                                                @if($doc->estado === 'Pendiente' || $doc->estado === 'Rechazado')
-                                                    <!-- Puede subir si está pendiente o si se lo rechazaron -->
-                                                    <button type="button" class="btn btn-sm btn-success text-nowrap btn-subir" 
-                                                            data-id="{{ $doc->id }}" data-nombre="{{ $doc->nombre_documento }}"
-                                                            data-bs-toggle="modal" data-bs-target="#modalSubirArchivo">
-                                                        <i class="fas fa-upload"></i> Subir
-                                                    </button>
-                                                @elseif($doc->estado === 'Entregado')
-                                                    <!-- Botón bloqueado mientras el admin lo revisa -->
-                                                    <button class="btn btn-sm btn-secondary text-nowrap" disabled title="Esperando revisión del encargado">
-                                                        <i class="fas fa-clock"></i> En Revisión
-                                                    </button>
+                                            <!-- 3. ACCIONES DEL ALUMNO (Usando Spatie) -->
+                                            @role('alumno')
+                                                @if(!$doc->genera_admin)
+                                                    @if($doc->estado === 'Pendiente' || $doc->estado === 'Rechazado')
+                                                        <button type="button" class="btn btn-sm btn-success text-nowrap btn-subir" 
+                                                                data-id="{{ $doc->id }}" data-nombre="{{ $doc->nombre_documento }}"
+                                                                data-bs-toggle="modal" data-bs-target="#modalSubirArchivo">
+                                                            <i class="fas fa-upload"></i> Subir
+                                                        </button>
+                                                    @elseif($doc->estado === 'Entregado')
+                                                        <button class="btn btn-sm btn-secondary text-nowrap" disabled title="Esperando revisión del encargado">
+                                                            <i class="fas fa-clock"></i> En Revisión
+                                                        </button>
+                                                    @endif
                                                 @endif
-                                            @endif
+                                            @endrole
 
-                                            <!-- 4. ACCIONES DEL ENCARGADO (ADMIN) -->
-                                            @if(Auth::user()->rol === 'admin')
-                                                
-                                                <!-- Aprobar (Solo si no está aprobado y YA subió archivo) -->
+                                            <!-- 4. ACCIONES DEL ENCARGADO / ADMIN (Usando Spatie) -->
+                                            @hasanyrole('admin|encargado')
                                                 @if($doc->estado !== 'Aprobado' && $doc->archivo_path)
                                                     <form action="{{ route('documentos.updateEstado', $doc) }}" method="POST" class="m-0">
                                                         @csrf
@@ -147,7 +153,6 @@
                                                     </button>
                                                 @endif
 
-                                                <!-- Observar / Rechazar (Disponible siempre que el alumno haya subido algo) -->
                                                 @if($doc->archivo_path)
                                                     <button type="button" class="btn btn-sm btn-danger text-nowrap btn-evaluar" 
                                                             data-id="{{ $doc->id }}" data-nombre="{{ $doc->nombre_documento }}" 
@@ -161,10 +166,9 @@
                                                         @endif
                                                     </button>
                                                 @endif
-                                            @endif   
+                                            @endhasanyrole   
                                         </div>
                                     </td>
-                             
                                 </tr>
                                 @empty
                                 <tr>
@@ -177,6 +181,57 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. HISTORIAL DE OBSERVACIONES GENERALES (BITÁCORA) -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card card-outline card-warning">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-history"></i> Bitácora de Observaciones del Expediente</h3>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    @forelse($expediente->observaciones ?? [] as $obs)
+                        <div class="callout callout-{{ $obs->estatus == 'Revisado' ? 'success' : ($obs->estatus == 'Rechazado' ? 'danger' : 'warning') }}">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="font-weight-bold m-0"><i class="fas fa-user"></i> {{ $obs->user->name ?? 'Sistema' }}</h6>
+                                <small class="text-muted">{{ $obs->created_at->format('d/m/Y H:i') }}</small>
+                            </div>
+                            <p class="mt-2 mb-1">{{ $obs->comentario }}</p>
+                            @if($obs->documento_afectado)
+                                <span class="badge badge-secondary">Doc: {{ $obs->documento_afectado }}</span>
+                            @endif
+                            <span class="badge badge-{{ $obs->estatus == 'Revisado' ? 'success' : ($obs->estatus == 'Rechazado' ? 'danger' : 'warning') }} float-right">
+                                {{ $obs->estatus }}
+                            </span>
+                        </div>
+                    @empty
+                        <p class="text-muted text-center py-3">No hay observaciones generales registradas aún.</p>
+                    @endforelse
+                </div>
+
+                <!-- Formulario para nueva observación general -->
+                @hasanyrole('admin|encargado')
+                <div class="card-footer bg-light">
+                    <form action="{{ route('expedientes.observaciones.store', $expediente) }}" method="POST">
+                        @csrf
+                        <div class="form-group mb-2">
+                            <textarea name="comentario" class="form-control" rows="2" placeholder="Escribe una nota general para el expediente..." required></textarea>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <input type="text" name="documento_afectado" class="form-control w-50 mr-2" placeholder="Documento afectado (Opcional)">
+                            <select name="estatus" class="form-control w-25 mr-2" required>
+                                <option value="Pendiente">Estatus: Pendiente</option>
+                                <option value="Revisado">Estatus: Revisado</option>
+                                <option value="Rechazado">Estatus: Rechazado</option>
+                            </select>
+                            <button type="submit" class="btn btn-warning w-25"><i class="fas fa-save"></i> Guardar Nota</button>
+                        </div>
+                    </form>
+                </div>
+                @endhasanyrole
             </div>
         </div>
     </div>
@@ -208,7 +263,7 @@
         </div>
     </div>
 
-    <!-- MODAL PARA OBSERVACIONES -->
+    <!-- MODAL PARA OBSERVACIONES DE DOCUMENTO -->
     <div class="modal fade" id="modalObservaciones" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -239,7 +294,6 @@
 
 @section('js')
 <script>
-    // Esperamos a que todo el HTML cargue
     document.addEventListener('DOMContentLoaded', function() {
         
         // --- 1. Configurar Modal de Subida ---

@@ -17,4 +17,8 @@ class Expediente extends Model
      { return $this->belongsTo(Dependencia::class); }
       public function documentos() 
     { return $this->hasMany(DocumentoExpediente::class); }
+        public function observaciones()
+    {
+        return $this->hasMany(Observacion::class)->latest(); // Trae las más recientes primero
+    }
 }

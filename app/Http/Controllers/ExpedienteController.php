@@ -112,10 +112,9 @@ class ExpedienteController extends Controller
 
     public function show(Expediente $expediente)
     {
-        // Cargamos el expediente con su alumno, su dependencia y todos sus documentos
-        $expediente->load(['alumno', 'dependencia', 'documentos']);
+        // Cargamos documentos y también el historial de observaciones con el nombre de quién lo escribió
+        $expediente->load(['alumno', 'dependencia', 'documentos', 'observaciones.user']);
         
-        // Calculamos el progreso
         $totalDocs = $expediente->documentos->count();
         $docsAprobados = $expediente->documentos->where('estado', 'Aprobado')->count();
         $progreso = $totalDocs > 0 ? round(($docsAprobados / $totalDocs) * 100) : 0;
@@ -123,6 +122,25 @@ class ExpedienteController extends Controller
         return view('expedientes.show', compact('expediente', 'progreso', 'totalDocs', 'docsAprobados'));
     }
 
+    public function storeObservacion(Request $request, Expediente $expediente)
+    {
+        // Validamos los datos
+        $request->validate([
+            'comentario' => 'required|string',
+            'estatus' => 'required|in:Pendiente,Revisado,Rechazado',
+            'documento_afectado' => 'nullable|string|max:255'
+        ]);
+
+        // Guardamos la observación
+        $expediente->observaciones()->create([
+            'user_id' => auth()->id(), // El ID del encargado que está logueado
+            'comentario' => $request->comentario,
+            'estatus' => $request->estatus,
+            'documento_afectado' => $request->documento_afectado
+        ]);
+
+        return back()->with('success', 'Observación registrada en el historial correctamente.');
+    }
     public function updateEstado(Request $request, DocumentoExpediente $documento)
     {
         $request->validate([
