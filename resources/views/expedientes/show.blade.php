@@ -19,7 +19,7 @@
     <!-- 1. DATOS DEL ALUMNO -->
     <div class="row">
         <div class="col-12">
-            <div class="card card-outline card-primary">
+            <div class="card card-outline card-primary shadow-sm">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-user-graduate"></i> Datos del Estudiante</h3>
                 </div>
@@ -41,7 +41,7 @@
                     <hr>
                     <div class="row">
                         <div class="col-md-12">
-                            <strong>Dependencia:</strong> {{ $expediente->dependencia->nombre }}
+                            <strong>Dependencia:</strong> {{ $expediente->dependencia->nombre ?? 'No asignada' }}
                         </div>
                     </div>
                 </div>
@@ -52,7 +52,7 @@
     <!-- 2. CHECKLIST DE DOCUMENTOS -->
     <div class="row">
         <div class="col-12">
-            <div class="card card-outline card-success">
+            <div class="card card-outline card-success shadow-sm">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-list-check"></i> Lista de Documentos y Entregas</h3>
                 </div>
@@ -108,19 +108,19 @@
                                     <td class="text-center align-middle">
                                         <div class="d-flex flex-row flex-nowrap justify-content-center gap-1" style="min-width: 420px;">
                                             
-                                            <!-- 1. BOTÓN GENERAR (Para todos) -->
+                                            <!-- 1. BOTÓN GENERAR -->
                                             <button class="btn btn-sm btn-primary text-nowrap" title="Descargar Formato">
                                                 <i class="fas fa-download"></i> Generar
                                             </button>
                                             
-                                            <!-- 2. BOTÓN VER (Solo si ya hay archivo subido) -->
+                                            <!-- 2. BOTÓN VER -->
                                             @if($doc->archivo_path)
                                                 <a href="{{ asset('storage/' . $doc->archivo_path) }}" target="_blank" class="btn btn-sm btn-dark text-nowrap" title="Ver Archivo">
                                                     <i class="fas fa-eye"></i> Ver
                                                 </a>
                                             @endif
                                             
-                                            <!-- 3. ACCIONES DEL ALUMNO (Usando Spatie) -->
+                                            <!-- 3. ACCIONES DEL ALUMNO -->
                                             @role('alumno')
                                                 @if(!$doc->genera_admin)
                                                     @if($doc->estado === 'Pendiente' || $doc->estado === 'Rechazado')
@@ -130,14 +130,14 @@
                                                             <i class="fas fa-upload"></i> Subir
                                                         </button>
                                                     @elseif($doc->estado === 'Entregado')
-                                                        <button class="btn btn-sm btn-secondary text-nowrap" disabled title="Esperando revisión del encargado">
+                                                        <button class="btn btn-sm btn-secondary text-nowrap" disabled title="Esperando revisión">
                                                             <i class="fas fa-clock"></i> En Revisión
                                                         </button>
                                                     @endif
                                                 @endif
                                             @endrole
 
-                                            <!-- 4. ACCIONES DEL ENCARGADO / ADMIN (Usando Spatie) -->
+                                            <!-- 4. ACCIONES DEL ENCARGADO / ADMIN -->
                                             @hasanyrole('admin|encargado')
                                                 @if($doc->estado !== 'Aprobado' && $doc->archivo_path)
                                                     <form action="{{ route('documentos.updateEstado', $doc) }}" method="POST" class="m-0">
@@ -172,9 +172,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="3" class="text-center text-muted py-4">
-                                        No hay documentos asignados a este expediente.
-                                    </td>
+                                    <td colspan="3" class="text-center text-muted py-4">No hay documentos asignados.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -188,108 +186,134 @@
     <!-- 3. HISTORIAL DE OBSERVACIONES GENERALES (BITÁCORA) -->
     <div class="row mt-4">
         <div class="col-12">
-            <div class="card card-outline card-warning">
+            <div class="card card-outline card-warning shadow-sm">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-history"></i> Bitácora de Observaciones del Expediente</h3>
                 </div>
                 <div class="card-body" style="max-height: 400px; overflow-y: auto;">
-                    @forelse($expediente->observaciones ?? [] as $obs)
-                        <div class="callout callout-{{ $obs->estatus == 'Revisado' ? 'success' : ($obs->estatus == 'Rechazado' ? 'danger' : 'warning') }}">
-                            <div class="d-flex justify-content-between">
-                                <h6 class="font-weight-bold m-0"><i class="fas fa-user"></i> {{ $obs->user->name ?? 'Sistema' }}</h6>
-                                <small class="text-muted">{{ $obs->created_at->format('d/m/Y H:i') }}</small>
+                 
+                    @forelse($expediente->bitacora ?? [] as $obs)
+                        @php
+                            // Colores de fondo
+                            $bgColor = $obs->estatus == 'Revisado' ? '#d4edda' : ($obs->estatus == 'Rechazado' ? '#f8d7da' : '#fff3cd');
+                            $borderColor = $obs->estatus == 'Revisado' ? '#28a745' : ($obs->estatus == 'Rechazado' ? '#dc3545' : '#ffc107');
+                            
+                            // Colores del badge de estatus
+                            $badgeBg = $obs->estatus == 'Revisado' ? '#28a745' : ($obs->estatus == 'Rechazado' ? '#dc3545' : '#ffc107');
+                            $badgeText = $obs->estatus == 'Pendiente' ? '#212529' : 'white';
+                        @endphp
+                        
+                        <div class="p-3 mb-3 rounded shadow-sm" style="background-color: {{ $bgColor }}; border-left: 5px solid {{ $borderColor }};">
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="font-weight-bold m-0" style="color: #621132 !important;">
+                                    <i class="fas fa-user-circle"></i> {{ $obs->user->name ?? 'Sistema' }}
+                                </h6>
+                                <small class="font-weight-bold" style="color: #212529 !important;">
+                                    <i class="far fa-clock"></i> {{ $obs->created_at->timezone('America/Mexico_City')->format('d/m/Y H:i') }}
+                                </small>
                             </div>
-                            <p class="mt-2 mb-1">{{ $obs->comentario }}</p>
-                            @if($obs->documento_afectado)
-                                <span class="badge badge-secondary">Doc: {{ $obs->documento_afectado }}</span>
-                            @endif
-                            <span class="badge badge-{{ $obs->estatus == 'Revisado' ? 'success' : ($obs->estatus == 'Rechazado' ? 'danger' : 'warning') }} float-right">
-                                {{ $obs->estatus }}
-                            </span>
+                            
+                            <p class="mb-3" style="color: #212529 !important; font-size: 1.05rem; font-weight: 500;">
+                                {{ $obs->comentario }}
+                            </p>
+                            
+                            <div class="d-flex justify-content-between align-items-end">
+                                <!-- Aquí recuperamos el nombre del documento con un fondo gris oscuro -->
+                                @if($obs->documento_afectado)
+                                    <span class="badge px-2 py-1 shadow-sm" style="background-color: #6c757d !important; color: white !important; font-size: 0.85rem;">
+                                        <i class="fas fa-file-alt"></i> {{ $obs->documento_afectado }}
+                                    </span>
+                                @else
+                                    <span></span>
+                                @endif
+
+                                <!-- Etiqueta del estatus -->
+                                <span class="badge px-3 py-1 shadow-sm" style="background-color: {{ $badgeBg }} !important; color: {{ $badgeText }} !important; font-size: 0.85rem;">
+                                    {{ $obs->estatus }}
+                                </span>
+                            </div>
                         </div>
                     @empty
-                        <p class="text-muted text-center py-3">No hay observaciones generales registradas aún.</p>
+                        <div class="text-center py-4">
+                            <i class="fas fa-clipboard-check fa-3x mb-3" style="color: #6c757d !important;"></i>
+                            <p style="color: #212529 !important;">No hay observaciones generales registradas aún.</p>
+                        </div>
                     @endforelse
+             
+                    
                 </div>
-
-                <!-- Formulario para nueva observación general -->
-                @hasanyrole('admin|encargado')
-                <div class="card-footer bg-light">
-                    <form action="{{ route('expedientes.observaciones.store', $expediente) }}" method="POST">
-                        @csrf
-                        <div class="form-group mb-2">
-                            <textarea name="comentario" class="form-control" rows="2" placeholder="Escribe una nota general para el expediente..." required></textarea>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <input type="text" name="documento_afectado" class="form-control w-50 mr-2" placeholder="Documento afectado (Opcional)">
-                            <select name="estatus" class="form-control w-25 mr-2" required>
-                                <option value="Pendiente">Estatus: Pendiente</option>
-                                <option value="Revisado">Estatus: Revisado</option>
-                                <option value="Rechazado">Estatus: Rechazado</option>
-                            </select>
-                            <button type="submit" class="btn btn-warning w-25"><i class="fas fa-save"></i> Guardar Nota</button>
-                        </div>
-                    </form>
-                </div>
-                @endhasanyrole
             </div>
         </div>
     </div>
 
-    <!-- MODAL PARA SUBIR ARCHIVO -->
+    <!-- ========================================== -->
+    <!-- MODAL PARA SUBIR ARCHIVO (ÚNICO)           -->
+    <!-- ========================================== -->
     <div class="modal fade" id="modalSubirArchivo" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
                 <form id="formSubirArchivo" method="POST" action="" enctype="multipart/form-data">
                     @csrf
-                    <div class="modal-header bg-success text-white">
-                        <h5 class="modal-title">Subir Documento Escaneado</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-header text-white" style="background-color: #621132;">
+                        <h5 class="modal-title font-weight-bold"><i class="fas fa-cloud-upload-alt mr-2"></i> Subir Documento</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
-                        <h6 class="font-weight-bold text-primary" id="nombre-documento-subir"></h6>
-                        <p class="text-muted text-sm">Selecciona el archivo PDF o Imagen (Máx. 5MB).</p>
-                        
-                        <div class="form-group mt-3">
-                            <input class="form-control" type="file" name="archivo" required accept=".pdf,.jpg,.jpeg,.png">
+                    <div class="modal-body p-4">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-file-pdf fa-3x text-muted mb-2"></i>
+                            <h5 class="font-weight-bold text-primary" id="nombre-documento-subir"></h5>
+                            <p class="text-muted small">Asegúrate de que el archivo sea legible y contenga las firmas requeridas.</p>
                         </div>
+                        
+                        <div class="form-group">
+                            <input type="file" class="form-control" name="archivo" required accept=".pdf,.jpg,.jpeg,.png">
+                        </div>
+                        <small class="text-danger mt-1 d-block"><i class="fas fa-info-circle"></i> Tamaño máximo permitido: 5MB.</small>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer bg-light">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-success">Subir Archivo</button>
+                        <button type="submit" class="btn text-white font-weight-bold" style="background-color: #621132;">
+                            <i class="fas fa-upload mr-1"></i> Subir Archivo
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- MODAL PARA OBSERVACIONES DE DOCUMENTO -->
+    <!-- ========================================== -->
+    <!-- MODAL PARA OBSERVACIONES (ÚNICO)           -->
+    <!-- ========================================== -->
     <div class="modal fade" id="modalObservaciones" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
                 <form id="formObservaciones" method="POST" action="">
                     @csrf
-                    <div class="modal-header">
-                        <h5 class="modal-title">Registrar Observación</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title font-weight-bold"><i class="fas fa-exclamation-triangle mr-2"></i> Evaluar / Rechazar Documento</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
-                        <h6 class="font-weight-bold text-primary" id="nombre-documento-modal"></h6>
+                    <div class="modal-body p-4">
+                        <h6 class="font-weight-bold text-dark mb-3" id="nombre-documento-modal"></h6>
                         <input type="hidden" name="estado" id="estado-input">
                         
-                        <div class="form-group mt-3">
-                            <label for="observaciones">Escribe la observación para el alumno:</label>
-                            <textarea class="form-control" name="observaciones" id="observaciones" rows="4" placeholder="Ej. Falta la firma del titular..."></textarea>
+                        <div class="form-group">
+                            <label for="observaciones" class="font-weight-bold text-muted">Motivo del rechazo u observación:</label>
+                            <textarea class="form-control" name="observaciones" id="observaciones" rows="4" placeholder="Ej. El documento no cuenta con los sellos correspondientes..." required style="resize: none;"></textarea>
                         </div>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer bg-light">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger">Guardar Observación</button>
+                        <button type="submit" class="btn btn-danger font-weight-bold">
+                            <i class="fas fa-paper-plane mr-1"></i> Guardar Observación
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+    
 @stop
 
 @section('js')

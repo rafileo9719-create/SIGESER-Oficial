@@ -112,8 +112,8 @@ class ExpedienteController extends Controller
 
     public function show(Expediente $expediente)
     {
-        // Cargamos documentos y también el historial de observaciones con el nombre de quién lo escribió
-        $expediente->load(['alumno', 'dependencia', 'documentos', 'observaciones.user']);
+        // Cambiamos 'observaciones.user' por 'bitacora.user'
+        $expediente->load(['alumno', 'dependencia', 'documentos', 'bitacora.user']);
         
         $totalDocs = $expediente->documentos->count();
         $docsAprobados = $expediente->documentos->where('estado', 'Aprobado')->count();
@@ -141,22 +141,44 @@ class ExpedienteController extends Controller
 
         return back()->with('success', 'Observación registrada en el historial correctamente.');
     }
-    public function updateEstado(Request $request, DocumentoExpediente $documento)
+    
+    public function updateEstado(Request $request, $id)
     {
-        $request->validate([
-            'estado' => 'required|in:Aprobado,Rechazado,Pendiente',
-            'observaciones' => 'nullable|string|max:500'
-        ]);
+        $documento = \App\Models\DocumentoExpediente::findOrFail($id);
+        $nuevoEstado = $request->estado;
+        $observacionTexto = $request->observaciones;
 
-        // Si no mandan observaciones desde el botón de aprobar, conservamos la que ya tenía
-        $observaciones = $request->has('observaciones') ? $request->observaciones : $documento->observaciones;
+        // 1. Actualizamos el documento
+        $documento->estado = $nuevoEstado;
+        $documento->observaciones = ($nuevoEstado == 'Aprobado') ? null : $observacionTexto;
+        $documento->save();
 
-        $documento->update([
-            'estado' => $request->estado,
-            'observaciones' => $observaciones
-        ]);
+        // 2. GUARDAMOS EN LA BITÁCORA (Aseguramos que el expediente_id existe)
+        if ($documento->expediente_id) {
+            if ($nuevoEstado == 'Rechazado' && $observacionTexto) {
+                \App\Models\Observacion::create([
+                    'expediente_id' => $documento->expediente_id,
+                    'user_id' => auth()->id(),
+                    'comentario' => "Documento Rechazado: " . $observacionTexto,
+                    'estatus' => 'Rechazado',
+                    'documento_afectado' => $documento->nombre_documento
+                ]);
+            } 
+            elseif ($nuevoEstado == 'Aprobado') {
+                \App\Models\Observacion::create([
+                    'expediente_id' => $documento->expediente_id,
+                    'user_id' => auth()->id(),
+                    'comentario' => "Documento aprobado correctamente.",
+                    'estatus' => 'Revisado',
+                    'documento_afectado' => $documento->nombre_documento
+                ]);
+            }
+        } else {
+            // Si no hay expediente_id, mandamos un error para saberlo
+            return back()->withErrors(['error' => 'El documento no tiene un expediente asociado en la base de datos.']);
+        }
 
-        return redirect()->back()->with('success', 'Estado del documento actualizado correctamente.');
+        return back()->with('success', 'El documento cambió de estado y se registró en el historial.');
     }
 
     public function subirArchivo(Request $request, DocumentoExpediente $documento)

@@ -7,57 +7,73 @@
 @stop
 
 @section('content')
-    <div class="card">
+    <div class="card card-outline card-primary shadow-sm">
         <div class="card-header">
-            <a href="{{ route('dependencias.create') }}" class="btn btn-primary">Agregar Nueva Dependencia</a>
+            <a href="{{ route('dependencias.create') }}" class="btn btn-primary font-weight-bold">
+                <i class="fas fa-plus-circle"></i> Agregar Nueva Dependencia
+            </a>
         </div>
         <div class="card-body">
             @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
+                <div class="alert alert-success alert-dismissible fade show">
+                    <i class="fas fa-check-circle"></i> {{ session('success') }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
             @endif
-            <table class="table table-bordered table-striped">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Convenio</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($dependencias as $dep)
-                    <tr>
-                        <td>{{ $dep->id }}</td>
-                        <td>{{ $dep->nombre }}</td>
-                        <td>
-                            @if($dep->tipo_convenio == 'AMBOS')
-                                <span class="badge badge-success">SS y RP</span>
-                            @elseif($dep->tipo_convenio == 'SS')
-                                <span class="badge badge-info">Solo Servicio Social</span>
-                            @else
-                                <span class="badge badge-warning">Solo Residencia</span>
-                            @endif
-                        </td>
-                        <td>
-                            @if($dep->activa)
-                                <span class="badge badge-primary">Activa</span>
-                            @else
-                                <span class="badge badge-danger">Inactiva</span>
-                            @endif
-                        </td>
-                        <td>
-                            <a href="{{ route('dependencias.edit', $dep) }}" class="btn btn-warning btn-sm">Editar</a>
-                            <form action="{{ route('dependencias.destroy', $dep) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar esta dependencia?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                            </form>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped table-hover align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre de la Dependencia</th>
+                            <th>Tipo de Convenio</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($dependencias as $dep)
+                        <tr>
+                            <td class="align-middle">{{ $dep->id }}</td>
+                            <td class="align-middle font-weight-bold">{{ $dep->nombre }}</td>
+                            <td class="align-middle">
+                                @if($dep->tipo_convenio == 'AMBOS')
+                                    <span class="badge badge-success px-2 py-1"><i class="fas fa-handshake"></i> SS y RP</span>
+                                @elseif($dep->tipo_convenio == 'SS')
+                                    <span class="badge badge-info px-2 py-1"><i class="fas fa-users"></i> Solo Servicio Social</span>
+                                @else
+                                    <span class="badge badge-warning px-2 py-1 text-dark"><i class="fas fa-user-tie"></i> Solo Residencia</span>
+                                @endif
+                            </td>
+                            <td class="align-middle text-center">
+                                @if($dep->activa)
+                                    <span class="badge badge-light border border-success text-success px-3 py-1 font-weight-bold">
+                                        <i class="fas fa-check-circle"></i> Activa
+                                    </span>
+                                @else
+                                    <span class="badge badge-light border border-danger text-danger px-3 py-1 font-weight-bold">
+                                        <i class="fas fa-times-circle"></i> Inactiva
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="align-middle text-center">
+                                <a href="{{ route('dependencias.edit', $dep) }}" class="btn btn-sm btn-warning" title="Editar">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                                <form action="{{ route('dependencias.destroy', $dep) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar esta dependencia?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Eliminar">
+                                        <i class="fas fa-trash"></i> Eliminar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 @stop

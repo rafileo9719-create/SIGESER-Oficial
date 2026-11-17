@@ -13,6 +13,6 @@ class DocumentoExpediente extends Model
 
     public function expediente() 
     { 
-        return $this->belongsTo(Expediente::class); 
+        return $this->belongsTo(Expediente::class, 'expediente_id'); 
     }
 }
